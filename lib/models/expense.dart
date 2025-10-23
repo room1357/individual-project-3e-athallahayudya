@@ -22,4 +22,22 @@ class Expense {
   String get formattedDate {
     return '${date.day}/${date.month}/${date.year}';
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'amount': amount,
+        'category': category,
+        'date': date.millisecondsSinceEpoch,
+        'description': description,
+      };
+
+  factory Expense.fromJson(Map<String, dynamic> json) => Expense(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        amount: (json['amount'] as num).toDouble(),
+        category: json['category'] as String,
+        date: DateTime.fromMillisecondsSinceEpoch(json['date'] as int),
+        description: json['description'] as String,
+      );
 }

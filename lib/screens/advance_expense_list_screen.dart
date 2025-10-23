@@ -1,245 +1,158 @@
 import 'package:flutter/material.dart';
 import '../models/expense.dart';
+import '../widgets/add_expense_dialog.dart';
+import '../widgets/expense_item.dart';
+import '../util/shared_prefs_storage.dart';
 
-class AdvancedExpenseListScreen extends StatefulWidget {
+class ExpenseListScreen extends StatefulWidget {
+  const ExpenseListScreen({super.key});
+
   @override
-  _AdvancedExpenseListScreenState createState() =>
-      _AdvancedExpenseListScreenState();
+  State<ExpenseListScreen> createState() => _ExpenseListScreenState();
 }
 
-class _AdvancedExpenseListScreenState extends State<AdvancedExpenseListScreen> {
-  List<Expense> expenses = [/* data expenses */];
-  List<Expense> filteredExpenses = [];
+class _ExpenseListScreenState extends State<ExpenseListScreen> {
+  late List<Expense> expenses = [];
   String selectedCategory = 'Semua';
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController _searchCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    filteredExpenses = expenses;
+    _loadExpenses();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadExpenses() async {
+    final loaded = await SharedPrefsStorage.loadAll();
+    if (mounted) {
+      setState(() {
+        if (loaded.isNotEmpty) {
+          expenses = loaded;
+        } else {
+          // sample awal jika belum ada data tersimpan
+          expenses = [
+            Expense(id: '1', title: 'Belanja Bulanan', amount: 150000, category: 'Makanan', date: DateTime(2024, 9, 15), description: 'Belanja kebutuhan bulanan di supermarket'),
+            Expense(id: '2', title: 'Bensin Motor', amount: 50000, category: 'Transportasi', date: DateTime(2024, 9, 14), description: 'Isi bensin motor untuk transportasi'),
+          ];
+        }
+      });
+    }
+  }
+
+  List<String> get categories {
+    final cats = expenses.map((e) => e.category).toSet().toList();
+    cats.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return ['Semua', ...cats];
+  }
+
+  List<Expense> get filteredExpenses {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    return expenses.where((e) {
+      final matchesCategory = selectedCategory == 'Semua' || e.category.toLowerCase() == selectedCategory.toLowerCase();
+      final matchesQuery = q.isEmpty || e.title.toLowerCase().contains(q) || e.description.toLowerCase().contains(q) || e.category.toLowerCase().contains(q);
+      return matchesCategory && matchesQuery;
+    }).toList();
+  }
+
+  Future<void> _onAddPressed() async {
+    var opts = categories.where((c) => c.toLowerCase() != 'semua').toList();
+    if (opts.isEmpty) opts = ['Makanan', 'Transportasi', 'Utilitas', 'Hiburan', 'Pendidikan'];
+
+    final newExpense = await showAddExpenseDialog(context, opts);
+    if (newExpense != null) {
+      await SharedPrefsStorage.addExpense(newExpense);
+      if (mounted) setState(() => expenses.insert(0, newExpense));
+    }
+  }
+
+  String _calculateTotal(List<Expense> list) {
+    final total = list.fold<double>(0, (sum, e) => sum + e.amount);
+    return 'Rp ${total.toStringAsFixed(0)}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final visible = filteredExpenses;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Pengeluaran Advanced'),
-        backgroundColor: Colors.blue,
-      ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: TextField(
-              controller: searchController,
+      appBar: AppBar(title: const Text('Daftar Pengeluaran'), backgroundColor: Colors.blue),
+      body: Column(children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.blue.shade50, border: Border(bottom: BorderSide(color: Colors.blue.shade200))),
+          child: Column(children: [
+            Text('Total Pengeluaran', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            Text(_calculateTotal(visible), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _searchCtrl,
               decoration: InputDecoration(
-                hintText: 'Cari pengeluaran...',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+                hintText: 'Cari judul / deskripsi / kategori...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchCtrl.text.isNotEmpty ? IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() => _searchCtrl.clear())) : null,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
               ),
-              onChanged: (value) {
-                _filterExpenses();
-              },
+              onChanged: (_) => setState(() {}),
             ),
-          ),
-
-          // Category filter
-          Container(
-            height: 50,
-            child: ListView(
+            const SizedBox(height: 8),
+            SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              children:
-                  [
-                        'Semua',
-                        'Makanan',
-                        'Transportasi',
-                        'Utilitas',
-                        'Hiburan',
-                        'Pendidikan',
-                      ]
-                      .map(
-                        (category) => Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(category),
-                            selected: selectedCategory == category,
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedCategory = category;
-                                _filterExpenses();
-                              });
-                            },
-                          ),
-                        ),
-                      )
-                      .toList(),
+              child: Row(children: categories.map((cat) {
+                final isSelected = selectedCategory == cat;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: isSelected ? Colors.blue : Colors.grey[200], foregroundColor: isSelected ? Colors.white : Colors.black),
+                    onPressed: () => setState(() => selectedCategory = cat),
+                    child: Text(cat),
+                  ),
+                );
+              }).toList()),
             ),
-          ),
-
-          // Statistics summary
-          Container(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatCard('Total', _calculateTotal(filteredExpenses)),
-                _buildStatCard('Jumlah', '${filteredExpenses.length} item'),
-                _buildStatCard(
-                  'Rata-rata',
-                  _calculateAverage(filteredExpenses),
-                ),
-              ],
-            ),
-          ),
-
-          // Expense list
-          Expanded(
-            child:
-                filteredExpenses.isEmpty
-                    ? Center(child: Text('Tidak ada pengeluaran ditemukan'))
-                    : ListView.builder(
-                      itemCount: filteredExpenses.length,
-                      itemBuilder: (context, index) {
-                        final expense = filteredExpenses[index];
-                        return Card(
-                          margin: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: _getCategoryColor(
-                                expense.category,
-                              ),
-                              child: Icon(
-                                _getCategoryIcon(expense.category),
-                                color: Colors.white,
-                              ),
-                            ),
+          ]),
+        ),
+        Expanded(
+          child: visible.isEmpty
+              ? Center(child: Text('Tidak ada pengeluaran', style: TextStyle(color: Colors.grey[600])))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: visible.length,
+                  itemBuilder: (context, index) {
+                    final expense = visible[index];
+                    return ExpenseItem(
+                      expense: expense,
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
                             title: Text(expense.title),
-                            subtitle: Text(
-                              '${expense.category} • ${expense.formattedDate}',
-                            ),
-                            trailing: Text(
-                              expense.formattedAmount,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red[600],
-                              ),
-                            ),
-                            onTap: () => _showExpenseDetails(context, expense),
+                            content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text('Jumlah: ${expense.formattedAmount}'),
+                              const SizedBox(height: 8),
+                              Text('Kategori: ${expense.category}'),
+                              const SizedBox(height: 8),
+                              Text('Tanggal: ${expense.formattedDate}'),
+                              const SizedBox(height: 8),
+                              Text('Deskripsi: ${expense.description}'),
+                            ]),
+                            actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
                           ),
                         );
                       },
-                    ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _filterExpenses() {
-    setState(() {
-      filteredExpenses =
-          expenses.where((expense) {
-            bool matchesSearch =
-                searchController.text.isEmpty ||
-                expense.title.toLowerCase().contains(
-                  searchController.text.toLowerCase(),
-                ) ||
-                expense.description.toLowerCase().contains(
-                  searchController.text.toLowerCase(),
-                );
-
-            bool matchesCategory =
-                selectedCategory == 'Semua' ||
-                expense.category == selectedCategory;
-
-            return matchesSearch && matchesCategory;
-          }).toList();
-    });
-  }
-
-  Widget _buildStatCard(String label, String value) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey)),
-        Text(
-          value,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    );
+                  },
+                ),
         ),
-      ],
-    );
-  }
-
-  String _calculateTotal(List<Expense> expenses) {
-    double total = expenses.fold(0, (sum, expense) => sum + expense.amount);
-    return 'Rp ${total.toStringAsFixed(0)}';
-  }
-
-  String _calculateAverage(List<Expense> expenses) {
-    if (expenses.isEmpty) return 'Rp 0';
-    double average =
-        expenses.fold(0.0, (sum, expense) => sum + expense.amount) /
-        expenses.length;
-    return 'Rp ${average.toStringAsFixed(0)}';
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Makanan':
-        return Colors.orange;
-      case 'Transportasi':
-        return Colors.blue;
-      case 'Utilitas':
-        return Colors.green;
-      case 'Hiburan':
-        return Colors.purple;
-      case 'Pendidikan':
-        return Colors.teal;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Makanan':
-        return Icons.fastfood;
-      case 'Transportasi':
-        return Icons.directions_car;
-      case 'Utilitas':
-        return Icons.lightbulb;
-      case 'Hiburan':
-        return Icons.movie;
-      case 'Pendidikan':
-        return Icons.school;
-      default:
-        return Icons.category;
-    }
-  }
-
-  void _showExpenseDetails(BuildContext context, Expense expense) {
-    showDialog(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            title: Text(expense.title),
-            content: Text(
-              'Kategori: ${expense.category}\n'
-              'Deskripsi: ${expense.description}\n'
-              'Tanggal: ${expense.formattedDate}\n'
-              'Jumlah: ${expense.formattedAmount}',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Tutup'),
-              ),
-            ],
-          ),
+      ]),
+      floatingActionButton: FloatingActionButton(onPressed: _onAddPressed, backgroundColor: Colors.blue, child: const Icon(Icons.add)),
     );
   }
 }

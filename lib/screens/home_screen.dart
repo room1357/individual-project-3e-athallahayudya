@@ -149,13 +149,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                   _buildDashboardCard(
                     context,
-                    'Messages',
-                    Icons.message,
-                    Colors.orange,
-                    null,
-                  ),
-                  _buildDashboardCard(
-                    context,
                     'Settings',
                     Icons.settings,
                     Colors.purple,
