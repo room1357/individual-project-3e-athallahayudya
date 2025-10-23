@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import '../models/expense_list_screen.dart';
+import 'expense_list_screen.dart';
+import 'profile_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -62,14 +64,22 @@ class HomeScreen extends StatelessWidget {
               leading: Icon(Icons.person),
               title: Text('Profile'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close the drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
               },
             ),
             ListTile(
               leading: Icon(Icons.settings),
               title: Text('Settings'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close the drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
               },
             ),
             Divider(),
@@ -78,6 +88,11 @@ class HomeScreen extends StatelessWidget {
               title: Text('Logout'),
               onTap: () {
                 // Handle logout
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
               },
             ),
           ],
@@ -123,7 +138,14 @@ class HomeScreen extends StatelessWidget {
                     'Profile',
                     Icons.person,
                     Colors.blue,
-                    null,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildDashboardCard(
                     context,
@@ -137,7 +159,14 @@ class HomeScreen extends StatelessWidget {
                     'Settings',
                     Icons.settings,
                     Colors.purple,
-                    null,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildDashboardCard(
                     context,
