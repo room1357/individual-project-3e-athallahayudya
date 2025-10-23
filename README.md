@@ -1,16 +1,39 @@
-# pemrograman_mobile
+# Extends Manager
 
-A new Flutter project.
+Extends Manager adalah aplikasi sederhana untuk mengelola pengeluaran pribadi dengan fitur utama: login, register, profil, pengeluaran, setting, dan logout.
 
-## Getting Started
+## Screenshot Fitur
 
-This project is a starting point for a Flutter application.
+### Login
+<div style="display: flex; gap: 10px;">
+  <img src="img_app/login_page1.jpg" alt="Login Page 1" width="300"/>
+  <img src="img_app/login_page2.jpg" alt="Login Page 2" width="300"/>
+</div>
 
-A few resources to get you started if this is your first Flutter project:
+### Register
+<div style="display: flex; gap: 10px;">
+  <img src="img_app/register_page1.jpg" alt="Register Page 1" width="300"/>
+  <img src="img_app/register_page2.jpg" alt="Register Page 2" width="300"/>
+</div>
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Profil
+<div style="display: flex; gap: 10px;">
+<img src="img_app/profil4.jpg" alt="Profile Page" width="300"/>
+<img src="img_app/profil3.jpg" alt="Profile Page" width="300"/>
+<img src="img_app/profil2.jpg" alt="Profile Page" width="300"/>
+<img src="img_app/profil1.jpg" alt="Profile Page" width="300"/>
+</div>
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Pengeluaran
+<div style="display: flex; gap: 10px;">
+<img src="img_app/expends__page1.jpg" alt="Expense Page" width="300"/>
+<img src="img_app/expends_page2.jpg" alt="Expense Page" width="300"/>
+<img src="img_app/expends_page3.jpg" alt="Expense Page" width="300"/>
+<img src="img_app/expends_page4.jpg" alt="Expense Page" width="300"/>
+<img src="img_app/expends_page5.jpg" alt="Expense Page" width="300"/>
+<img src="img_app/expends_6.jpg" alt="Expense Page" width="300"/>
+<img src="img_app/expends_page7.jpg" alt="Expense Page" width="300"/>
+</div>
+
+### Setting
+<img src="img_app/setting_page.jpg" alt="Setting Page" width="300"/>
